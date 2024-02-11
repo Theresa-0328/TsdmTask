@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 
 from push import push
 
-
 with open("config/config.yaml", "r") as config_file:
     config = yaml.safe_load(config_file)
 
@@ -18,23 +17,24 @@ account_cookies = config.get('account', [])
 first_account = account_cookies[0]
 cookie = first_account.get('cookie')
 
+
 def tsdm_check_in():
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "Accept-Encoding":"gzip, deflate, br",
-        "Accept-Language":"zh-CN,zh;q=0.9,en;q=0.8",
-        "Cache-Control":"max-age=0",
-        "Connection":"keep-alive",
-        "Cookie":cookie,
-        "Referer":"https://www.tsdm39.com/forum.php",
-        "Upgrade-Insecure-Requests":"1",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        "Cache-Control": "max-age=0",
+        "Connection": "keep-alive",
+        "Cookie": cookie,
+        "Referer": "https://www.tsdm39.com/forum.php",
+        "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
     }
 
     with httpx.Client(headers=headers) as client:
         # 获得formhash
         response = client.get("https://www.tsdm39.com/forum.php")
-        pattern = r'name="formhash" value="(.+?)"'
+        pattern = r'formhash=(.+?)"'
         match = re.search(pattern, response.text)
         formhash_value = match.group(1)
         print("formhash value:", formhash_value)
@@ -43,12 +43,14 @@ def tsdm_check_in():
         response.headers['Content-Type'] = 'application/x-www-form-urlencoded'
         response.headers["Origin"] = 'https://www.tsdm39.com'
         # 签到
-        payload = {"formhash": encoded_formhash, "qdxq": "kx","qdmode":"3","todaysay":"","fastreply":"1"}
-        response = client.post("https://www.tsdm39.com/plugin.php?id=dsu_paulsign%3Asign&operation=qiandao&infloat=1&sign_as=1&inajax=1", data=payload)
-        
+        payload = {"formhash": encoded_formhash, "qdxq": "kx", "qdmode": "3", "todaysay": "", "fastreply": "1"}
+        response = client.post(
+            "https://www.tsdm39.com/plugin.php?id=dsu_paulsign%3Asign&operation=qiandao&infloat=1&sign_as=1&inajax=1",
+            data=payload)
+
 
 def tsdm_work():
-     # 必须要这个content-type, 否则没法接收
+    # 必须要这个content-type, 否则没法接收
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko',
         'cookie': cookie,
@@ -68,8 +70,8 @@ def tsdm_work():
             print(result)
             return
         else:
-            print("未找到匹配的字符串，可以打工")
-        
+            print("可以打工")
+
         # 必须连续6次！
         data = {"act": "clickad"}
         for i in range(6):
@@ -79,21 +81,22 @@ def tsdm_work():
             time.sleep(3)
 
         # 获取奖励
-        data={"act":"getcre"}
+        data = {"act": "getcre"}
         response = client.post("https://www.tsdm39.com/plugin.php?id=np_cliworkdz:work", headers=headers, data=data)
         print("Content:", response.text)
 
-#查询积分
+
+# 查询积分
 def get_score():
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "Accept-Encoding":"gzip, deflate, br",
-        "Accept-Language":"zh-CN,zh;q=0.9,en;q=0.8",
-        "Cache-Control":"max-age=0",
-        "Connection":"keep-alive",
-        "Cookie":cookie,
-        "Referer":"https://www.tsdm39.com/forum.php",
-        "Upgrade-Insecure-Requests":"1",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        "Cache-Control": "max-age=0",
+        "Connection": "keep-alive",
+        "Cookie": cookie,
+        "Referer": "https://www.tsdm39.com/forum.php",
+        "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
     }
     with httpx.Client(headers=headers) as client:
@@ -109,10 +112,12 @@ def get_score():
     print("天使币数量:", angel_coins)
     return angel_coins
 
+
 def run():
     tsdm_check_in()
     tsdm_work()
-    push("已拥有天使币数量:{}".format(get_score()),bot_token,chat_id)
+    push("已拥有天使币数量:{}".format(get_score()), bot_token, chat_id)
+
 
 if __name__ == "__main__":
     run()
